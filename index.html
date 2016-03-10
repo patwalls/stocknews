@@ -39,10 +39,17 @@
     return (diffDays - 1);
   }
 
-  window.loadChart = function () {
+  window.onload = function() {
+    window.loadChart();
+  };
 
+  window.loadChart = function () {
+    $('.landing-text').html( 'Click on any point on the graph to see news from that day!' );
+    $('.article-list').empty();
+    $('.results').empty();
     var symbolLookup = new Stock();
     symbolLookup.lookup(queryString(), function () {
+
       console.log(symbolLookup.name);
 
       var dataset = new StockData();
@@ -52,9 +59,9 @@
 
         var chart = new CanvasJS.Chart("chartContainer",
         {
-          title:{
-           text: symbolLookup.name
-         },
+        //   title:{
+        //    text: symbolLookup.name
+        //  },
          theme: "theme2",
          animationEnabled: true,
          axisX: {
@@ -71,9 +78,10 @@
           lineThickness: "3",
           yValueFormatString: '$#.##',
           click: function (e) {
+            $('.landing-text').empty();
             console.log('mouseover is working!!');
             getArticles(symbolLookup.name, e.dataPoint.parsedDate);
-            showDetails(e.dataPoint.y, e.dataPoint.percentChange);
+            // showDetails(e.dataPoint.y, e.dataPoint.percentChange);
           },
           showInLegend: true,
            legendText: dataset.symbol + " Closing Share Price",
@@ -84,17 +92,17 @@
       console.log(chart);
     chart.render();
     });
-  var showDetails = function(todayPrice, percentChange) {
-    $('.change').empty();
-    var html = '<div class=percent-change>' +
-                  '<div class=percent-change>' + percentChange.toFixed(2) + '%</div>' +
-               '</div>' +
-               '<div class=numbers-change>' +
-                  '<div class=today-price>$' + (todayPrice/(1 + (percentChange / 100))).toFixed(2) + '</div>' +
-                  '<div class=yesterday-price>$' + todayPrice.toFixed(2) + '</div>' +
-               '</div>';
-    $('.change').append(html);
-  }
+  // var showDetails = function(todayPrice, percentChange) {
+  //   $('.change').empty();
+  //   var html = '<div class=percent-change>' +
+  //                 '<div class=percent-change>' + percentChange.toFixed(2) + '%</div>' +
+  //              '</div>' +
+  //              '<div class=numbers-change>' +
+  //                 '<div class=today-price>$' + (todayPrice/(1 + (percentChange / 100))).toFixed(2) + '</div>' +
+  //                 '<div class=yesterday-price>$' + todayPrice.toFixed(2) + '</div>' +
+  //              '</div>';
+  //   $('.change').append(html);
+  // }
 
   var getArticles = function(name, date) {
     console.log('trying to get articles!!!');
@@ -106,13 +114,16 @@
       var newsImages = {
         'AP': 'https://pbs.twimg.com/profile_images/461964160838803457/8z9FImcv_400x400.png',
         'Reuters': 'http://laschoolreport.com/wp-content/uploads/2014/06/4744.Reuters-Logo.jpg',
-        'The New York Times': 'http://honestreporting.com/wp-content/uploads/2013/10/nytimes-logo.jpg'
+        'The New York Times': 'http://honestreporting.com/wp-content/uploads/2013/10/nytimes-logo.jpg',
+        'CNBC': 'https://www.seeklogo.net/wp-content/uploads/2012/10/cnbc-vector-logo.png'
+
       }
       var items = [];
       console.log(article.articles);
       if (article.articles.length === 0) {
         $('.results').html( 'No Articles Found' );
       } else {
+        $('.results').html( 'Articles relating to ' + name + ' found on ' + date.slice(4,6) + '/' + date.slice(6,8) + '/' +  date.slice(0,4) + ':');
         $.each(article.articles, function(i, item) {
 
               items.push(
@@ -146,24 +157,19 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.min.js"></script>
 </head>
 <body>
-  <div class='inputs'>
-    <div class='left-toolbar'>
-      Search by company name or ticker:
-      <input type="text" id="search-query" value="Apple" />
-      <input type="button" value="See Chart" onclick="window.loadChart()" />
-    </div>
-    <div>
+    <div class='date-inputs'>
       Edit Dates:
-      <input type="date" id="start-date" value="2016-01-01" />
-      <input type="date" id="end-date" value="" />
+      <input type="date" id="start-date" value="2016-01-01" onchange="window.loadChart()" />
+      <input type="date" id="end-date" value="" onchange="window.loadChart()" />
     </div>
-  </div>
+    <div class='search'>
+      Search by company name or ticker:
+      <input type="text" id="search-query" value="Apple" onchange="window.loadChart()" placeholder='Search by company name or ticker'/>
+    </div>
   <div id="chartContainer" style="height: 400px; width: 100%;">
   </div>
   <div class='landing-text'></div>
   <div class='bottom-container'>
-    <div class='change'>
-    </div>
     <div class='articles'>
       <div class="results"></div>
       <ul class='article-list'></ul>
