@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="./assets/css.css">
+  <script src="./lib/markitAPI.js" type="text/javascript"></script>
+  <script src="./lib/nytAPI.js" type="text/javascript"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script type="text/javascript">
+
+  var queryString = function () {
+    return document.getElementById('search-query').value;
+  }
+
+  var startDate = function () {
+    var startDate = document.getElementById('start-date').value;
+    var date1 = new Date(startDate);
+    var date2 = new Date();
+
+    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    console.log(diffDays);
+    return (diffDays - 1);
+  }
+
+  var daysCutoff = function () {
+    var startDate = document.getElementById('start-date').value;
+    var endDate = document.getElementById('end-date').value;
+
+    var date1 = new Date(startDate);
+    if (endDate === '') {
+      var date2 = new Date();
+    } else {
+      var date2 = new Date(endDate);
+    }
+    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    console.log(diffDays);
+    return (diffDays - 1);
+  }
+
+  window.loadChart = function () {
+
+    var symbolLookup = new Stock();
+    symbolLookup.lookup(queryString(), function () {
+      console.log(symbolLookup.name);
+
+      var dataset = new StockData();
+      dataset.getData(symbolLookup.symbol, startDate(), daysCutoff() ,function () {
+
+        var minMaxbound = ((dataset.max - dataset.min) / 8);
+
+        var chart = new CanvasJS.Chart("chartContainer",
+        {
+          title:{
+           text: symbolLookup.name
+         },
+         theme: "theme2",
+         animationEnabled: true,
+         axisX: {
+           valueFormatString: "MM-DD-YYYY"
+          },
+          axisY:{
+            valueFormatString: "$#",
+            maximum: (dataset.max + minMaxbound),
+            minimum: (dataset.min - minMaxbound)
+          },
+         data: [
+         {
+          type: "line",
+          lineThickness: "3",
+          yValueFormatString: '$#.##',
+          click: function (e) {
+            console.log('mouseover is working!!');
+            getArticles(symbolLookup.name, e.dataPoint.parsedDate);
+            showDetails(e.dataPoint.y, e.dataPoint.percentChange);
+          },
+          showInLegend: true,
+           legendText: dataset.symbol + " Closing Share Price",
+           dataPoints: dataset.data
+         }
+        ]
+      });
+      console.log(chart);
+    chart.render();
+    });
+  var showDetails = function(todayPrice, percentChange) {
+    $('.change').empty();
+    var html = '<div class=percent-change>' +
+                  '<div class=percent-change>' + percentChange.toFixed(2) + '%</div>' +
+               '</div>' +
+               '<div class=numbers-change>' +
+                  '<div class=today-price>$' + (todayPrice/(1 + (percentChange / 100))).toFixed(2) + '</div>' +
+                  '<div class=yesterday-price>$' + todayPrice.toFixed(2) + '</div>' +
+               '</div>';
+    $('.change').append(html);
+  }
+
+  var getArticles = function(name, date) {
+    console.log('trying to get articles!!!');
+    var article = new NYT();
+
+    article.getData(name, date , function () {
+      $('.results').empty();
+      $('.article-list').empty();
+      var newsImages = {
+        'AP': 'https://pbs.twimg.com/profile_images/461964160838803457/8z9FImcv_400x400.png',
+        'Reuters': 'http://laschoolreport.com/wp-content/uploads/2014/06/4744.Reuters-Logo.jpg',
+        'The New York Times': 'http://honestreporting.com/wp-content/uploads/2013/10/nytimes-logo.jpg'
+      }
+      var items = [];
+      console.log(article.articles);
+      if (article.articles.length === 0) {
+        $('.results').html( 'No Articles Found' );
+      } else {
+        $.each(article.articles, function(i, item) {
+
+              items.push(
+                '<div class=news-item>',
+                  '<span class=image>',
+                    '<li><img src=' + newsImages[item.source] + ' height=80 width=80></img></li>',
+                    '<li>' + item.pub_date.slice(0,10) + '</li>',
+                  '</span>',
+                  '<span class=details>',
+                    '<li class=headline><a href=' + item.web_url + '>' + item.headline.main + '</a></li>',
+                    '<li class=source-and-date>' + item.source + ' - ' + item.pub_date.slice(0,10) + '</li>',
+                    '<li class=lead-paragraph> (' + item.section_name + ') ' + item.lead_paragraph + '</li>',
+                  '</span>',
+                '</div>'
+              );
+
+        });  // close each()
+
+       $('.article-list').html( items.join('') );
+    }
+    });
+  };
+
+
+});
+
+
+}
+// };
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.min.js"></script>
+</head>
+<body>
+  <div class='inputs'>
+    <div class='left-toolbar'>
+      Search by company name or ticker:
+      <input type="text" id="search-query" value="Apple" />
+      <input type="button" value="See Chart" onclick="window.loadChart()" />
+    </div>
+    <div>
+      Edit Dates:
+      <input type="date" id="start-date" value="2016-01-01" />
+      <input type="date" id="end-date" value="" />
+    </div>
+  </div>
+  <div id="chartContainer" style="height: 400px; width: 100%;">
+  </div>
+  <div class='landing-text'></div>
+  <div class='bottom-container'>
+    <div class='change'>
+    </div>
+    <div class='articles'>
+      <div class="results"></div>
+      <ul class='article-list'></ul>
+    </div>
+  </div>
+</body>
+</html>
