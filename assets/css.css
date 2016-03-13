@@ -1,16 +1,23 @@
-body {
-  font-family: arial;
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: arial;
+}
+
+.top-container {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  height: auto;
+}
+
+.bottom-container {
+  width: 100%;
 }
 
 .inputs {
   display: flex;
   justify-content: space-between;
-}
-
-.bottom-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
 }
 
 .change {
@@ -30,7 +37,6 @@ body {
 .news-item {
   display: flex;
   flex-direction: row;
-  width: 60%;
   border-top: 1px solid #eee;
 }
 .news-item .image {
@@ -72,23 +78,117 @@ body {
 }
 
 .results {
-  font-size: 2em;
+  font-size: 1.5em;
+}
+
+.search-parent {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  width: 50%;
 }
 
 .search {
   display: flex;
-  justify-content: center;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 
-.search input {
-  width: 40%;
-  font-size: 2em;
-  text-align: center;
+.input {
+  -webkit-appearance: none;
+  display: inline-block;
+  box-sizing: content-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  width: auto;
+  font: inherit;
+  vertical-align: baseline;
+  background: transparent;
+  color: inherit;
 }
 
-.date-inputs {
+.input {
+  width: 600px;
+  font-size: 60px;
+  font-weight: bold;
+  color: gray;
+  border-bottom: 10px solid gray;
+}
+
+.input > input:focus {
+   color: black;
+   border-color: black;
+ }
+
+.input > label {
+   padding: 10px 0;
+   font-weight: bold;
+}
+
+.search > label {
+    display: block;
+    padding: 10px 0;
+    font-weight: bold;
+    color: gray;
+    padding-top: 3px;
+  }
+
+.input-date a {
   display: flex;
   justify-content: flex-end;
+  padding: 10px 0;
+  font-weight: bold;
+  color: gray;
+  padding-top: 3px;
+  font-size: 14px;
+}
+
+.input-date .date {
+  font-weight: bold;
+  color: gray;
+  padding-top: 3px;
+  font-size: 14px;
+}
+
+.input-date {
+  width: 491px;
+  position: relative;
+  left: 110px;
+  top: -37px;
+
+}
+
+.dates {
+  display: flex;
+  flex-direction: row;
+}
+
+.date {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+}
+
+.modal {
+  margin: 80px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: scroll !important;
+  width: 60% !important;
+}
+
+.modal a.close-modal {
+
+    top: -37.5px !important;
+}
+
+.glyphicon-remove {
+  content: "\e014";
+  position: fixed !important;
+  top: 12px !important;
+  right: 18px;
+  color: white;
+  z-index: -1;
 }

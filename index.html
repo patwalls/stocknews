@@ -7,7 +7,18 @@
   <script src="./lib/markitAPI.js" type="text/javascript"></script>
   <script src="./lib/nytAPI.js" type="text/javascript"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="./assets/jquery.modal.min.js" type="text/javascript" charset="utf-8"></script>
+  <link rel="stylesheet" href="./assets/jquery.modal.css" type="text/css" media="screen" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"/>
   <script type="text/javascript">
+
+  $( document ).ready(function() {
+    $('.toggle').click(function (event) {
+      event.preventDefault();
+      var target = $(this).attr('href');
+      $(target).toggleClass('hidden show');
+    });
+  });
 
   var queryString = function () {
     return document.getElementById('search-query').value;
@@ -41,6 +52,7 @@
   }
 
   window.onload = function() {
+    console.log('window onload');
     window.loadChart();
   };
 
@@ -48,44 +60,77 @@
     $('.landing-text').html( 'Click on any point on the graph to see news from that day!' );
     $('.article-list').empty();
     $('.results').empty();
-    var symbolLookup = new Stock();
-    symbolLookup.lookup(queryString(), function () {
+      var symbolLookup = new Stock();
+      symbolLookup.lookup(queryString(), function () {
+        if (symbolLookup.symbol === 'Ticker Not Found') {
+          displayNoChart();
+        } else {
+          displayChart(symbolLookup);
+        }
+      });
+  }
 
-      console.log(symbolLookup.name);
+  var displayNoChart = function() {
+    $('.chartContainer').empty();
+    var query = queryString();
+    var html = '<div class="alert alert-danger" role="alert">' + query + ' company or ticker not found</div>'
+    $('.alerty').append(html);
+  };
 
+  var displayChart = function (symbol) {
+      $('.alerty').empty();
       var dataset = new StockData();
-      dataset.getData(symbolLookup.symbol, startDate(), daysCutoff() ,function () {
+      dataset.getData(symbol.symbol, startDate(), daysCutoff() ,function () {
 
         var minMaxbound = ((dataset.max - dataset.min) / 8);
 
         var chart = new CanvasJS.Chart("chartContainer",
         {
-        //   title:{
-        //    text: symbolLookup.name
-        //  },
+          title:{
+           text: symbol.exchange + ': ' + symbol.fullName + ' (' + symbol.symbol + ')',
+           verticalAlign: "bottom",
+           fontFamily: "Helvetica Neue",
+           fontWeight: "bold",
+           fontColor: 'gray'
+         },
          theme: "theme2",
          animationEnabled: true,
          axisX: {
-           valueFormatString: "MM-DD-YYYY"
+           valueFormatString: 'MMM YYYY',
+           interval: 1,
+           intervalType: "month"
           },
           axisY:{
-            valueFormatString: "$#",
+            gridThickness: 0,
+            labelFontColor: 'transparent',
+            tickColor: 'transparent',
+            stripLines: [
+              {
+              value: dataset.max,
+              label: dataset.max
+              },
+              {
+              value: dataset.min,
+              label: dataset.min
+              },
+            ],
             maximum: (dataset.max + minMaxbound),
             minimum: (dataset.min - minMaxbound)
           },
          data: [
          {
           type: "line",
+          xValueType: 'date',
           lineThickness: "3",
           yValueFormatString: '$#.##',
           click: function (e) {
             $('.landing-text').empty();
             console.log('mouseover is working!!');
-            getArticles(symbolLookup.name, e.dataPoint.parsedDate);
+            getArticles(symbol.name, e.dataPoint.parsedDate);
             // showDetails(e.dataPoint.y, e.dataPoint.percentChange);
           },
-          showInLegend: true,
-           legendText: dataset.symbol + " Closing Share Price",
+          showInLegend: false,
+           legendText: 'none',
            dataPoints: dataset.data
          }
         ]
@@ -93,6 +138,7 @@
       console.log(chart);
     chart.render();
     });
+  };
   // var showDetails = function(todayPrice, percentChange) {
   //   $('.change').empty();
   //   var html = '<div class=percent-change>' +
@@ -112,6 +158,9 @@
     article.getData(name, date , function () {
       $('.results').empty();
       $('.article-list').empty();
+      $('#login-form').modal({
+        fadeDuration: 150
+      });
       var newsImages = {
         'AP': 'https://pbs.twimg.com/profile_images/461964160838803457/8z9FImcv_400x400.png',
         'Reuters': 'http://laschoolreport.com/wp-content/uploads/2014/06/4744.Reuters-Logo.jpg',
@@ -122,7 +171,7 @@
       var items = [];
       console.log(article.articles);
       if (article.articles.length === 0) {
-        $('.results').html( 'No Articles Found' );
+        $('.results').html( 'No articles relating to ' + name + ' found on ' + date.slice(4,6) + '/' + date.slice(6,8) + '/' +  date.slice(0,4) + ':');
       } else {
         $('.results').html( 'Articles relating to ' + name + ' found on ' + date.slice(4,6) + '/' + date.slice(6,8) + '/' +  date.slice(0,4) + ':');
         $.each(article.articles, function(i, item) {
@@ -149,32 +198,57 @@
   };
 
 
-});
 
-
-}
-// };
 </script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.min.js"></script>
 </head>
 <body>
-    <div class='date-inputs'>
-      Edit Start and End Dates:
-      <input type="date" id="start-date" value="2016-01-01" onchange="window.loadChart()" />
-      <input type="date" id="end-date" value="" onchange="window.loadChart()" />
+  <div class='container-fluid'>
+    <div class='row'>
+      <div class='col-lg-12 top-container'>
+
+        <div class='search-parent'>
+          <div class='search'>
+            <input class='input' type="text" id="search-query" autofocus autocomplete='off' value="Apple" onchange="window.loadChart()" placeholder=''/>
+            <label>Company name or ticker</label>
+          </div>
+
+          <div class='input-date'>
+            <a href="#credits" class="toggle btn">Edit Dates <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></a>
+
+            <div id="credits" class="well hidden">
+              <div class='dates'>
+                <div class='date'>
+                  Start Date
+                  <input type="date" id="start-date" value="2015-12-31" />
+                </div>
+                <div class='date'>
+                  End Date
+                  <input type="date" id="end-date" value="" placeholder='End Date' />
+                </div>
+                <div class='date-button'>
+                  <button class="btn btn-default" type="submit" onclick="window.loadChart()">See Chart</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class='search'>
-      Search by company name or ticker:
-      <input type="text" id="search-query" value="Apple" onchange="window.loadChart()" placeholder='Search by company name or ticker'/>
+    <div class='row'>
+      <div class='col-lg-12 chart-container'>
+        <div class='alerty'></div>
+        <div id="chartContainer" class='chartContainer'></div>
+      </div>
     </div>
-  <div id="chartContainer" style="height: 400px; width: 100%;">
   </div>
-  <div class='landing-text'></div>
-  <div class='bottom-container'>
-    <div class='articles'>
-      <div class="results"></div>
-      <ul class='article-list'></ul>
+  <form id="login-form" class="modal">
+    <div>
+      <div class='articles'>
+        <div class="results"></div>
+        <ul class='article-list'></ul>
+      </div>
     </div>
-  </div>
+  </form>
 </body>
 </html>
