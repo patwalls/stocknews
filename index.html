@@ -21,7 +21,19 @@
   });
 
   var queryString = function () {
-    return document.getElementById('search-query').value;
+    if (googleException()) {
+      return 'goog';
+    } else {
+      return document.getElementById('search-query').value;
+    }
+  }
+
+  var googleException = function () {
+    if (document.getElementById('search-query').value === 'Google' ||
+        document.getElementById('search-query').value === 'google') {
+      return true;
+    }
+    return false;
   }
 
   var startDate = function () {
@@ -52,7 +64,6 @@
   }
 
   window.onload = function() {
-    console.log('window onload');
     window.loadChart();
   };
 
@@ -62,6 +73,7 @@
     $('.results').empty();
       var symbolLookup = new Stock();
       symbolLookup.lookup(queryString(), function () {
+        console.log(symbolLookup.symbol);
         if (symbolLookup.symbol === 'Ticker Not Found') {
           displayNoChart();
         } else {
@@ -96,9 +108,12 @@
          theme: "theme2",
          animationEnabled: true,
          axisX: {
-           valueFormatString: 'MMM YYYY',
+           valueFormatString: 'MM/DD/YYYY',
            interval: 1,
-           intervalType: "month"
+           intervalType: "month",
+           labelFontColor: 'transparent',
+           tickColor: 'transparent',
+           stripLines: dataset.striplines
           },
           axisY:{
             gridThickness: 0,
@@ -118,8 +133,13 @@
             minimum: (dataset.min - minMaxbound)
           },
          data: [
+          //  {
+          //    indexLabelBackgroundColor: 'gray'
+          //  },
          {
           type: "line",
+          indexLabelPlacement: "inside",
+          indexLabelFontFamily: "Helvetica Neue",
           xValueType: 'date',
           lineThickness: "3",
           yValueFormatString: '$#.##',
@@ -205,7 +225,7 @@
 <body>
   <div class='container-fluid'>
     <div class='row'>
-      <div class='col-lg-12 top-container'>
+      <div class='col-lg-12 col-md-12 top-container'>
 
         <div class='search-parent'>
           <div class='search'>
